@@ -57,8 +57,8 @@ class GameLogic
     output.concat(check_answer(breaker[:input][index]).to_s)
   end
 
-  def code_processor(breaker)
-    input_verifier(breaker, gets.chomp)
+  def code_processor(breaker, input = gets.chomp)
+    input_verifier(breaker, input)
     breaker[:input].each_with_index do |_value, index|
       print output_assembler(breaker, index)
     end
@@ -91,6 +91,12 @@ class GameLogic
     input_text_color_number
     input_verifier(maker, gets.chomp)
     puts "#{@display.show_result(maker[:input][0])} This is your code. Lets watch computer solve it!"
+    breaker = { input: [], round: 1 }
+    while breaker[:round] <= 12
+      code_processor(breaker, @display.random_answer.join.to_s) # random getfeedback then calculate and input again
+      break if win?(breaker)
+    end
+    puts "You lose here is the answer: #{@answer_key} #{@display.show_result(@answer_key)}"
   end
 
   def input_checker(user_input)
