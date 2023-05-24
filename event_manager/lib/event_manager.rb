@@ -10,6 +10,10 @@ time_domain = {
   night: { count: 0, time_range: '18:00 -> 23:59' }
 }
 
+def largest_hash_key(hash)
+  hash.max_by { |_k, v| v }
+end
+
 def largest_hash_count(hash)
   count_array = []
   hash.each { |value| count_array.push(value[1][:count]) }
@@ -39,16 +43,16 @@ def legislators_by_zipcode(zip)
     legislators = civic_info.representative_info_by_address(
       address: zip,
       levels: 'country',
-      roles: ['legislatorUpperBody', 'legislatorLowerBody']
+      roles: %w[legislatorUpperBody legislatorLowerBody]
     ).officials
     legislator_names = legislators.map(&:name)
     legislator_names.join(', ')
-  rescue
+  rescue StandardError
     'You can find your representatives by visiting www.commoncause.org/take-action/find-elected-officials'
   end
 end
 
-def save_thank_you_letter(id,form_letter)
+def save_thank_you_letter(id, form_letter)
   Dir.mkdir('output') unless Dir.exist?('output')
 
   filename = "output/thanks_#{id}.html"
@@ -56,30 +60,6 @@ def save_thank_you_letter(id,form_letter)
   File.open(filename, 'w') do |file|
     file.puts form_letter
   end
-end
-
-puts 'EventManager initialized.'
-
-contents = CSV.open(
-  'event_attendees.csv',
-  headers: true,
-  header_converters: :symbol
-)
-
-# template_letter = File.read('form_letter.erb')
-# erb_template = ERB.new template_letter
-time = []
-contents.each do |row|
-  id = row[0]
-  name = row[:first_name]
-  zipcode = clean_zipcode(row[:zipcode])
-  # legislators = legislators_by_zipcode(zipcode)
-  phone = clean_phonenumber(row[:homephone])
-  time.push(Time.parse(row[:regdate].split[1]).hour)
-  # form_letter = erb_template.result(binding)
-
-  # save_thank_you_letter(id,form_letter)
-  puts "#{id} #{name} #{zipcode} #{phone}"
 end
 
 def time_counter(times, time_rank)
@@ -105,4 +85,37 @@ def time_ranking(times, time_rank)
   puts "The time most people register is #{largest_count_key.to_s.gsub(':', '')} by the time of #{largest_count_time}"
 end
 
+puts 'EventManager initialized.'
+
+contents = CSV.open(
+  'event_attendees.csv',
+  headers: true,
+  header_converters: :symbol
+)
+
+# template_letter = File.read('form_letter.erb')
+# erb_template = ERB.new template_letter
+time = []
+date = []
+contents.each do |row|
+  id = row[0]
+  name = row[:first_name]
+  zipcode = clean_zipcode(row[:zipcode])
+  # legislators = legislators_by_zipcode(zipcode)
+  phone = clean_phonenumber(row[:homephone])
+  time.push(Time.parse(row[:regdate].split[1]).hour)
+  date.push(Time.strptime(row[:regdate].split[0], '%m/%d/%y').strftime('%A'))
+  # form_letter = erb_template.result(binding)
+
+  # save_thank_you_letter(id,form_letter)
+  # puts "#{id} #{name} #{zipcode} #{phone}"
+end
+def date_counter(date)
+  date.each_with_object(Hash.new(0)) do |sum, total|
+    total[sum] += 1
+  end
+end
 time_ranking(time, time_domain)
+date_usage = date_counter(date)
+largest_date = largest_hash_key(date_usage)
+puts "#{largest_date[0]} is the most register day of the week! by #{largest_date[1]} total"
