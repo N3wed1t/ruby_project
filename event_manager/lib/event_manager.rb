@@ -108,7 +108,7 @@ contents.each do |row|
   # form_letter = erb_template.result(binding)
 
   # save_thank_you_letter(id,form_letter)
-  # puts "#{id} #{name} #{zipcode} #{phone}"
+  puts "#{id} #{name} #{zipcode} #{phone}"
 end
 def date_counter(date)
   date.each_with_object(Hash.new(0)) do |sum, total|
